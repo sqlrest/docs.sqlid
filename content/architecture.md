@@ -6,8 +6,8 @@ title: Architecture
 
 `sqlid` follows the [gomatic/template.cli](https://github.com/gomatic/template.cli) tiered architecture (**app → domain → implementation**), adapted to two facts about this repository:
 
-1. **`sqlid` is a library first.** The Oracle-style SQL-ID computation is the public API at the module root (`import "github.com/sqlrest/sqlid"`). That package is the *implementation tier* and is deliberately **not** hidden under `internal/`, so downstream code can depend on it. The CLI is layered on top.
-2. **`sqlid` is a single command.** There is no command tree and no structured (JSON/YAML) result; the tool emits text. So the template's `internal/app` machinery (`Runner`/`Default`/`output`) and per-subcommand directories do not apply. What carries over is the *separation of tiers* and the sentinel-error convention.
+1. **`sqlid` is a library first.** The Oracle-style SQL-ID computation is the public API at the module root (`import "github.com/sqlrest/sqlid"`). That package is the _implementation tier_ and is deliberately **not** hidden under `internal/`, so downstream code can depend on it. The CLI is layered on top.
+2. **`sqlid` is a single command.** There is no command tree and no structured (JSON/YAML) result; the tool emits text. So the template's `internal/app` machinery (`Runner`/`Default`/`output`) and per-subcommand directories do not apply. What carries over is the _separation of tiers_ and the sentinel-error convention.
 
 ## The tiers
 
@@ -23,8 +23,8 @@ Dependencies flow one direction only: a tier depends only on the tier to its rig
 
 ### Why the split exists
 
-- A reader opening [`internal/app/app.go`](../internal/app/app.go) sees the *entire* CLI surface — flags, the command, and I/O — and nothing else.
-- A reader opening [`internal/domain/identify/identify.go`](../internal/domain/identify/identify.go) sees *what the command does*, expressed as orchestration over injected dependencies (a `FileSystem` and an input stream), with all SQL work delegated to the library. This is what makes it testable to 100% without touching the real filesystem.
+- A reader opening [`internal/app/app.go`](../internal/app/app.go) sees the _entire_ CLI surface — flags, the command, and I/O — and nothing else.
+- A reader opening [`internal/domain/identify/identify.go`](../internal/domain/identify/identify.go) sees _what the command does_, expressed as orchestration over injected dependencies (a `FileSystem` and an input stream), with all SQL work delegated to the library. This is what makes it testable to 100% without touching the real filesystem.
 - The root `sqlid` library is reusable by any caller and is the shared source of truth — the Go CLI and the [Python implementation](../py) agree against [`testdata/parity.json`](../testdata/parity.json).
 
 ## The seam
