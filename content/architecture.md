@@ -2,14 +2,14 @@
 title: Architecture
 ---
 
-# Architecture
+## Architecture
 
 `sqlid` follows the [gomatic/template.cli](https://github.com/gomatic/template.cli) tiered architecture (**app → domain → implementation**), adapted to two facts about this repository:
 
 1. **`sqlid` is a library first.** The Oracle-style SQL-ID computation is the public API at the module root (`import "github.com/sqlrest/sqlid"`). That package is the _implementation tier_ and is deliberately **not** hidden under `internal/`, so downstream code can depend on it. The CLI is layered on top.
 2. **`sqlid` is a single command.** There is no command tree and no structured (JSON/YAML) result; the tool emits text. So the template's `internal/app` machinery (`Runner`/`Default`/`output`) and per-subcommand directories do not apply. What carries over is the _separation of tiers_ and the sentinel-error convention.
 
-## The tiers
+### The tiers
 
 Dependencies flow one direction only: a tier depends only on the tier to its right.
 
@@ -21,13 +21,13 @@ Dependencies flow one direction only: a tier depends only on the tier to its rig
 
 `internal/app` and `internal/domain` are reserved names with exactly these meanings. `internal/constants` holds the sentinel errors.
 
-### Why the split exists
+#### Why the split exists
 
 - A reader opening [`internal/app/app.go`](../internal/app/app.go) sees the _entire_ CLI surface — flags, the command, and I/O — and nothing else.
 - A reader opening [`internal/domain/identify/identify.go`](../internal/domain/identify/identify.go) sees _what the command does_, expressed as orchestration over injected dependencies (a `FileSystem` and an input stream), with all SQL work delegated to the library. This is what makes it testable to 100% without touching the real filesystem.
 - The root `sqlid` library is reusable by any caller and is the shared source of truth — the Go CLI and the [Python implementation](../py) agree against [`testdata/parity.json`](../testdata/parity.json).
 
-## The seam
+### The seam
 
 The app tier builds an [`identify.Config`](../internal/domain/identify/identify.go) from the parsed flags (negating the `--no-*`/`--keep-*` flags into positive toggles) and decides whether to read stdin (`!--no-stdin && !isTerminal`). It then calls:
 
@@ -37,11 +37,11 @@ func Run(cfg Config, filesys FileSystem, args []string, stdin io.Reader) (string
 
 `Run` returns the rendered text; the app tier writes it to `--output` or stdout. The domain never imports `urfave/cli` and never touches `os` directly — the `FileSystem` and stream are injected.
 
-## Quality gate
+### Quality gate
 
 Run `make check`. It must exit zero, and every package holds **100% statement coverage**, every function has **cognitive complexity ≤ 7**, errors are constant sentinels in [`internal/constants`](../internal/constants) matched with `errors.Is`, and code is `gofumpt`-clean. The `cmd/sqlid` shim is the process entry point and is covered by its own test.
 
-## Adding a flag
+### Adding a flag
 
 1. Add the `cli.Flag` in [`internal/app/app.go`](../internal/app/app.go) `flags()`.
 2. Map it into [`identify.Config`](../internal/domain/identify/identify.go) in the app tier's `config()`.
